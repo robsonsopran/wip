@@ -87,6 +87,23 @@ def process_diff_output(filtered_diff):
     print(result)
 
     return result
+   
+def filter_single_occurrences(filtered_result):
+    lines = filtered_result.splitlines()
+    variable_count = defaultdict(int)  # Contagem das variáveis
+
+    # Conta quantas vezes cada variável aparece (ignora o "+" ou "-")
+    for line in lines:
+        var = line[2:].strip()  # Remove o "+" ou "-" e pega a variável
+        variable_count[var] += 1
+
+    # Filtra as linhas onde as variáveis aparecem apenas uma vez
+    filtered_changes = [line for line in lines if variable_count[line[2:].strip()] == 1]
+
+    # Retorna a lista filtrada, com as variáveis que aparecem uma vez
+    result = "\n".join(filtered_changes)
+    return result
+
 
 def main():
     diff_file = "C:\\GIT\\MEC\\ldra\\PlatformSoftware\\develop.diff
