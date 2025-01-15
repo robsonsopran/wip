@@ -74,13 +74,11 @@ def process_diff_output(filtered_diff):
     for var, count in variable_count.items():
         print(f"\nVerificando a variável: {var}, contagem: {count}")
         if abs(count) % 2 == 1:  # Se a soma for ímpar
-            if count > 0:
-                filtered_changes.append(line_count[var][-1])  # Mantém a última adição
-                print(f"  - Mantendo a última adição para {var}: {line_count[var][-1]}")
-            else:
-                filtered_changes.append(line_count[var][0])  # Mantém a primeira remoção
-                print(f"  - Mantendo a primeira remoção para {var}: {line_count[var][0]}")
+            # Mantém apenas a última ocorrência (se a contagem é positiva ou negativa, mantemos a última linha correspondente)
+            filtered_changes.append(line_count[var][-1])  
+            print(f"  - Mantendo a última ocorrência para {var}: {line_count[var][-1]}")
         else:
+            # Se a soma for par, remove todas as ocorrências dessa variável
             print(f"  - Variável {var} foi descartada porque a soma das ocorrências é par.")
 
     # Monta a saída no formato esperado
