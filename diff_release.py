@@ -56,41 +56,55 @@ def process_diff_output(filtered_diff):
     current_file = None
     temp_changes = defaultdict(list)
 
-    # Organizar as linhas por arquivo
+    print("Iniciando a organização das linhas por arquivo...")
+
+    # Organiza as linhas por arquivo
     for line in lines:
         if line.startswith("Arquivo:"):
             current_file = line.split(":")[1].strip()
+            print(f"Arquivo detectado: {current_file}")
         else:
             temp_changes[current_file].append(line)
-    
-    # Processar as alterações de cada arquivo
+
+    # Processa as alterações de cada arquivo
     for file, lines in temp_changes.items():
         variable_count = defaultdict(int)  # Contagem de variáveis
         line_count = defaultdict(list)  # Armazena as linhas associadas a cada variável
-        
+
+        print(f"\nProcessando as alterações do arquivo: {file}")
+
+        # Conta as adições e remoções por variável
         for line in lines:
-            var = line[2:].strip()  # Retira o "+" ou "-" e pega a variável
+            var = line[2:].strip()  # Remove o "+" ou "-" e pega a variável
             line_count[var].append(line)
             if line.startswith("+"):
                 variable_count[var] += 1
             elif line.startswith("-"):
                 variable_count[var] -= 1
-        
-        # Filtrar as linhas baseadas na contagem das variáveis
+
+        # Debug: Exibe o contador de variáveis
+        print(f"Contagem de variáveis para {file}: {dict(variable_count)}")
+
+        # Filtra as linhas baseadas na contagem das variáveis
         for var, count in variable_count.items():
+            print(f"\nVerificando a variável: {var}, contagem: {count}")
             if abs(count) % 2 == 1:  # Se a soma for ímpar
-                # Se a contagem for positiva, mantém a última adição, caso contrário, a última remoção
                 if count > 0:
-                    file_changes[file].append(line_count[var][-1])
+                    file_changes[file].append(line_count[var][-1])  # Mantém a última linha de adição
+                    print(f"  - Mantendo a última adição para {var}: {line_count[var][-1]}")
                 else:
-                    file_changes[file].append(line_count[var][0])
-    
-    # Montar a saída no formato esperado
+                    file_changes[file].append(line_count[var][0])  # Mantém a primeira linha de remoção
+                    print(f"  - Mantendo a primeira remoção para {var}: {line_count[var][0]}")
+            else:
+                print(f"  - Variável {var} foi descartada porque a soma das ocorrências é par.")
+
+    # Monta a saída no formato esperado
     result = []
+    print("\nFinalizando o processamento e preparando o resultado...")
     for file, lines in file_changes.items():
         result.append(f"Arquivo: {file}")
         result.extend(lines)
-    
+
     return "\n".join(result)
 
 def main():
