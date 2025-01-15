@@ -19,24 +19,23 @@ def filter_diff(diff_text):
     def normalize_variable(line):
         return re.sub(r'(\w+\s+)?(ICD_DATA\s+)?(SA_\w+)', r'\3', line)
 
-    additions = defaultdict(set)
-    removals = defaultdict(set)
+    variable_counts = defaultdict(lambda: defaultdict(int))
 
     for file, lines in changes.items():
         for line in lines:
             normalized = normalize_variable(line[1:].strip())
             if line.startswith("+"):
-                additions[file].add(normalized)
+                variable_counts[file][normalized] += 1
             elif line.startswith("-"):
-                removals[file].add(normalized)
+                variable_counts[file][normalized] -= 1
 
     filtered_changes = defaultdict(list)
 
-    for file, lines in changes.items():
-        for line in lines:
-            normalized = normalize_variable(line[1:].strip())
-            if line.startswith("+") and normalized not in removals[file]:
-                filtered_changes[file].append(line)
+    for file, counts in variable_counts.items():
+        for variable, count in counts.items():
+            if count % 2 != 0:  # Mantém apenas se o total for ímpar
+                state = "+" if count > 0 else "-"
+                filtered_changes[file].append(f"{state} {variable}")
 
     result = []
     for file, lines in filtered_changes.items():
