@@ -51,61 +51,44 @@ def filter_diff (diff_text):
 
 def process_diff_output(filtered_diff):
     lines = filtered_diff.splitlines()
-    file_changes = defaultdict(list)
-    
-    current_file = None
-    temp_changes = defaultdict(list)
+    variable_count = defaultdict(int)  # Contagem de variáveis
+    line_count = defaultdict(list)  # Armazena as linhas associadas a cada variável
 
-    print("Iniciando a organização das linhas por arquivo...")
+    print("Iniciando o processamento das linhas...")
 
-    # Organiza as linhas por arquivo
+    # Conta as adições e remoções por variável globalmente
     for line in lines:
-        if line.startswith("Arquivo:"):
-            current_file = line.split(":")[1].strip()
-            print(f"Arquivo detectado: {current_file}")
-        else:
-            temp_changes[current_file].append(line)
+        var = line[2:].strip()  # Remove o "+" ou "-" e pega a variável
+        line_count[var].append(line)
+        if line.startswith("+"):
+            variable_count[var] += 1
+        elif line.startswith("-"):
+            variable_count[var] -= 1
 
-    # Processa as alterações de cada arquivo
-    for file, lines in temp_changes.items():
-        variable_count = defaultdict(int)  # Contagem de variáveis
-        line_count = defaultdict(list)  # Armazena as linhas associadas a cada variável
+    # Debug: Exibe o contador de variáveis
+    print(f"\nContagem de variáveis: {dict(variable_count)}")
 
-        print(f"\nProcessando as alterações do arquivo: {file}")
+    filtered_changes = []  # Lista para armazenar as linhas filtradas
 
-        # Conta as adições e remoções por variável
-        for line in lines:
-            var = line[2:].strip()  # Remove o "+" ou "-" e pega a variável
-            line_count[var].append(line)
-            if line.startswith("+"):
-                variable_count[var] += 1
-            elif line.startswith("-"):
-                variable_count[var] -= 1
-
-        # Debug: Exibe o contador de variáveis
-        print(f"Contagem de variáveis para {file}: {dict(variable_count)}")
-
-        # Filtra as linhas baseadas na contagem das variáveis
-        for var, count in variable_count.items():
-            print(f"\nVerificando a variável: {var}, contagem: {count}")
-            if abs(count) % 2 == 1:  # Se a soma for ímpar
-                if count > 0:
-                    file_changes[file].append(line_count[var][-1])  # Mantém a última linha de adição
-                    print(f"  - Mantendo a última adição para {var}: {line_count[var][-1]}")
-                else:
-                    file_changes[file].append(line_count[var][0])  # Mantém a primeira linha de remoção
-                    print(f"  - Mantendo a primeira remoção para {var}: {line_count[var][0]}")
+    # Filtra as linhas globalmente baseado na contagem das variáveis
+    for var, count in variable_count.items():
+        print(f"\nVerificando a variável: {var}, contagem: {count}")
+        if abs(count) % 2 == 1:  # Se a soma for ímpar
+            if count > 0:
+                filtered_changes.append(line_count[var][-1])  # Mantém a última adição
+                print(f"  - Mantendo a última adição para {var}: {line_count[var][-1]}")
             else:
-                print(f"  - Variável {var} foi descartada porque a soma das ocorrências é par.")
+                filtered_changes.append(line_count[var][0])  # Mantém a primeira remoção
+                print(f"  - Mantendo a primeira remoção para {var}: {line_count[var][0]}")
+        else:
+            print(f"  - Variável {var} foi descartada porque a soma das ocorrências é par.")
 
     # Monta a saída no formato esperado
-    result = []
-    print("\nFinalizando o processamento e preparando o resultado...")
-    for file, lines in file_changes.items():
-        result.append(f"Arquivo: {file}")
-        result.extend(lines)
+    result = "\n".join(filtered_changes)
+    print("\nResultado final filtrado:")
+    print(result)
 
-    return "\n".join(result)
+    return result
 
 def main():
     diff_file = "C:\\GIT\\MEC\\ldra\\PlatformSoftware\\develop.diff
