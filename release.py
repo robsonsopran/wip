@@ -4,14 +4,14 @@ from collections import defaultdict
 def filter_diff (diff_text):
 
     file_pattern = r'^\+\+\+\s+b/(.+)$'
-    line_pattern = r'^ [+]\s* (\w+\s+)? (ICD_DATA\s+)?SA_\w+'
+    line_pattern = r'^[+]\s*(\w+\s+)?(ICD_DATA\s+)?SA_\w+'
     
     changes = defaultdict(list)
     current_file = None
     
-    for line in diff text.splitlines():
+    for line in diff_text.splitlines():
         file_match = re.match(file_pattern, line)
-        if file_match: 
+        if file_match:
             current_file = file_match.group(1)
         elif current_file and re.match(line_pattern, line):
             changes[current_file].append(line)
@@ -30,24 +30,23 @@ def filter_diff (diff_text):
             elif line.startswith("-"):
                 removals[file].add(normalized)
 
-    filtered_changes defaultdict(list)
+    filtered_changes = defaultdict(list)
 
     for file, removed_lines in removals.items():
         for line in removed_lines:
-            if not any (line in added lines for added lines in additions.values()):
-                filtered_changes [file].append("- " + line)
+            if not any (line in added_lines for added_lines in additions.values()):
+                filtered_changes[file].append("- " + line)
 
     for file, added_lines in additions.items():
         for line in added_lines:
             if not any(line in removed_lines for removed_lines in removals.values()):
                 filtered_changes[file].append("+ " + line)
-                
 
     result = []
     for file, lines in filtered_changes.items():
         result.append(f"Arquivo: {file}")
         result.extend(lines)
-        
+    
     return "\n".join(result)
 
 
@@ -56,7 +55,7 @@ def main():
 
     try:
         with open (diff_file, "r") as file:
-            diff _content = file.read()
+            diff_content = file.read()
     except FileNotFoundError:
         print(f"Erro: Arquivo '{diff_file}' não encontrado.")
         return
