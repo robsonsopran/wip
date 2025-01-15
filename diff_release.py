@@ -19,30 +19,29 @@ def filter_diff(diff_text):
     def normalize_variable(line):
         return re.sub(r'(\w+\s+)?(ICD_DATA\s+)?(SA_\w+)', r'\3', line)
 
-    additions = defaultdict(int)
-    removals = defaultdict(int)
-    final_state = defaultdict(str)
+    additions = defaultdict(set)
+    removals = defaultdict(set)
 
     for file, lines in changes.items():
         for line in lines:
             normalized = normalize_variable(line[1:].strip())
             if line.startswith("+"):
-                additions[normalized] += 1
-                final_state[normalized] = '+'  # Variable present in the final state
+                additions[file].add(normalized)
             elif line.startswith("-"):
-                removals[normalized] += 1
-                final_state[normalized] = '-'  # Variable potentially removed
+                removals[file].add(normalized)
 
-    # Filter variables that remain in the code
+    filtered_changes = defaultdict(list)
+
+    for file, lines in changes.items():
+        for line in lines:
+            normalized = normalize_variable(line[1:].strip())
+            if line.startswith("+") and normalized not in removals[file]:
+                filtered_changes[file].append(line)
+
     result = []
-    result.append("Resumo de mudanças por variável:")
-
-    for variable in set(additions.keys()).union(removals.keys()):
-        added_count = additions[variable]
-        removed_count = removals[variable]
-        final_marker = "Presente" if final_state[variable] == '+' else "Removida"
-        result.append(f"Variável: {variable}, Adicionada: {added_count} vezes, Removida: {removed_count} vezes, Estado final: {final_marker}")
-
+    for file, lines in filtered_changes.items():
+        result.append(f"Arquivo: {file}")
+        result.extend(lines)
     return "\n".join(result)
 
 def main():
