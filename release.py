@@ -85,7 +85,7 @@ def filter_single_occurrences(filtered_result):
         else:
             var = line[2:].strip()
 
-        variable_count[var] + 1
+        variable_count[var] += 1
 
     filtered_changes = [line for line in lines if variable_count[line[2:].split('=')[0].strip() if '' in line else line[2:].split(';')[0].strip()] == 1]
     
