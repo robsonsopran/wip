@@ -19,12 +19,12 @@ def filter_diff(diff_text):
     def normalize_variable(line):
         return re.sub(r'(\w+\s+)?(ICD_DATA\s+)?(SA_\w+)', r'\1\3', line)
 
-    additions defaultdict(set)
-    removals defaultdict(set)
+    additions = defaultdict(set)
+    removals = defaultdict(set)
 
     for file, lines in changes.items():
         for line in lines:
-            normalized = normalize_variable(line [1:].strip())
+            normalized = normalize_variable(line[1:].strip())
             if line.startswith("+"):
                 additions[file].add(normalized)
             elif line.startswith("-"):
@@ -35,18 +35,18 @@ def filter_diff(diff_text):
     for file, removed_lines in removals.items():
         for line in removed_lines:
             if not any(line in added_lines for added_lines in additions.values()):
-                filtered_changes[file].append("-" + line)
-                
-        for file, added_lines in additions.items():
-            for line in added_lines:
-                if not any(line in removed_lines for removed_lines in removals.values()):
-                    filtered_changes[file].append("+"+ line)
+                filtered_changes[file].append("- " + line)
+
+    for file, added_lines in additions.items():
+        for line in added_lines:
+            if not any(line in removed_lines for removed_lines in removals.values()):
+                filtered_changes[file].append("+ " + line)
 
     result = []
     for file, lines in filtered_changes.items():
         result.append(f"Arquivo: {file}")
         result.extend(lines)
-        
+
     return "\n".join(result)
 
 def process_diff_output(filtered_diff):
@@ -62,15 +62,15 @@ def process_diff_output(filtered_diff):
             variable_count[var] += 1
         elif line.startswith("-"):
             variable_count[var] -= 1
-        
+
     filtered_changes = []
-    
+
     for var, count in variable_count.items():
         if abs(count) % 2 == 1:
             filtered_changes.append(line_count[var][-1])
 
     result = "\n".join(filtered_changes)
-    
+
     return result
     
 def filter_single_occurrences(filtered_result):
@@ -80,11 +80,10 @@ def filter_single_occurrences(filtered_result):
     for line in lines:
         if '=' in line:
             var = line[2:].split('=')[0].strip()
-        elif';' in line:
+        elif ';' in line:
             var = line[2:].split(';')[0].strip()
         else:
             var = line[2:].strip()
-
 
         variable_count[var] + 1
 
@@ -102,7 +101,7 @@ def main():
     except FileNotFoundError:
         print(f"Erro: Arquivo '{diff_file}' não encontrado.")
         return
-        
+
     result = filter_diff(diff_content)
     #print(result)
     filtered_result = process_diff_output(result)
