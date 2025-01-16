@@ -1,8 +1,11 @@
 import re
 from collections import defaultdict
 
-def filter_diff(diff_text):
-
+def process_diff(diff_text):
+    """
+    Processa o texto de um diff para identificar alterações relevantes
+    em variáveis SA_ e retorna as diferenças filtradas.
+    """
     file_pattern = r'^\+\+\+\s+b/(.+)$'
     line_pattern = r'^[+-]\s*(?!SA_)(\w+\s+)?(ICD_DATA\s+)?SA_\w+'
 
@@ -17,100 +20,53 @@ def filter_diff(diff_text):
             changes[current_file].append(line)
 
     def normalize_variable(line):
+        """Normaliza a variável removendo prefixos irrelevantes."""
         return re.sub(r'(\w+\s+)?(ICD_DATA\s+)?(SA_\w+)', r'\1\3', line)
 
-    additions = defaultdict(set)
-    removals = defaultdict(set)
+    variable_changes = defaultdict(lambda: defaultdict(set))
 
     for file, lines in changes.items():
         for line in lines:
             normalized = normalize_variable(line[1:].strip())
             if line.startswith("+"):
-                additions[file].add(normalized)
+                variable_changes[file]['added'].add(normalized)
             elif line.startswith("-"):
-                removals[file].add(normalized)
-
-    filtered_changes = defaultdict(list)
-
-    for file, removed_lines in removals.items():
-        for line in removed_lines:
-            if not any(line in added_lines for added_lines in additions.values()):
-                filtered_changes[file].append("- " + line)
-
-    for file, added_lines in additions.items():
-        for line in added_lines:
-            if not any(line in removed_lines for removed_lines in removals.values()):
-                filtered_changes[file].append("+ " + line)
-
-    result = []
-    for file, lines in filtered_changes.items():
-        result.append(f"Arquivo: {file}")
-        result.extend(lines)
-
-    return "\n".join(result)
-
-def process_diff_output(filtered_diff):
-
-    lines = filtered_diff.splitlines()
-    variable_count = defaultdict(int)
-    line_count = defaultdict(list)
-
-    for line in lines:
-        var = line[2:].strip()
-        line_count[var].append(line)
-        if line.startswith("+"):
-            variable_count[var] += 1
-        elif line.startswith("-"):
-            variable_count[var] -= 1
+                variable_changes[file]['removed'].add(normalized)
 
     filtered_changes = []
 
-    for var, count in variable_count.items():
-        if abs(count) % 2 == 1:
-            filtered_changes.append(line_count[var][-1])
+    for file, data in variable_changes.items():
+        unique_additions = data['added'] - data['removed']
+        unique_removals = data['removed'] - data['added']
 
-    result = "\n".join(filtered_changes)
+        for line in unique_additions:
+            filtered_changes.append(f"+ {line}")
+        for line in unique_removals:
+            filtered_changes.append(f"- {line}")
 
-    return result
-    
-def filter_single_occurrences(filtered_result):
-    lines = filtered_result.splitlines()
+    # Consolidar e filtrar ocorrências únicas
     variable_count = defaultdict(int)
-
-    for line in lines:
-        if '=' in line:
-            var = line[2:].split('=')[0].strip()
-        elif ';' in line:
-            var = line[2:].split(';')[0].strip()
-        else:
-            var = line[2:].strip()
-
+    for line in filtered_changes:
+        var = line[2:].strip().split('=')[0].split(';')[0].strip()
         variable_count[var] += 1
 
-    filtered_changes = [line for line in lines if variable_count[line[2:].split('=')[0].strip() if '' in line else line[2:].split(';')[0].strip()] == 1]
-    
-    result = "\n".join(filtered_changes)
-    return result
+    final_result = [line for line in filtered_changes if variable_count[line[2:].strip().split('=')[0].split(';')[0].strip()] == 1]
+
+    return "\n".join(final_result)
 
 def main():
     diff_file = "C:\\GIT\\MEC\\ldra\\PlatformSoftware\\2_0_1to2_0.diff"
 
     try:
-        with open (diff_file, "r") as file:
+        with open(diff_file, "r") as file:
             diff_content = file.read()
     except FileNotFoundError:
         print(f"Erro: Arquivo '{diff_file}' não encontrado.")
         return
 
-    result = filter_diff(diff_content)
-    #print(result)
-    filtered_result = process_diff_output(result)
-    #print(filtered_result)
-    
-    filtered_single_result = filter_single_occurrences(filtered_result)
-
-    print("variáveis de SA:")
-    print(filtered_single_result)
+    result = process_diff(diff_content)
+    print("Variáveis de SA únicas:")
+    print(result)
 
 if __name__ == "__main__":
     main()
