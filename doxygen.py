@@ -1,11 +1,11 @@
 import re
 
-def arquivos_modificados_com_palavras_chave(diff, palavras_chave):
+def arquivos_modificados_com_palavras_chave(arquivo_diff, palavras_chave):
     """
-    Processa o diff do Git e retorna os arquivos que sofreram alterações 
+    Processa um arquivo de diff do Git e retorna os arquivos que sofreram alterações 
     em linhas contendo palavras-chave específicas.
 
-    :param diff: String contendo o diff do Git
+    :param arquivo_diff: Caminho para o arquivo de diff do Git
     :param palavras_chave: Lista de palavras-chave para buscar
     :return: Conjunto de arquivos que possuem as palavras-chave nas linhas alteradas
     """
@@ -14,6 +14,10 @@ def arquivos_modificados_com_palavras_chave(diff, palavras_chave):
 
     # Armazena os arquivos que satisfazem os critérios
     arquivos_modificados = set()
+
+    # Lê o arquivo de diff
+    with open(arquivo_diff, "r") as f:
+        diff = f.read()
 
     # Divide o diff por arquivo usando o indicador "diff --git"
     blocos = diff.split("diff --git")
@@ -43,36 +47,14 @@ def arquivos_modificados_com_palavras_chave(diff, palavras_chave):
 
 
 if __name__ == "__main__":
-    # Exemplo de diff do Git
-    diff_exemplo = """\
-diff --git a/arquivo1.cpp b/arquivo1.cpp
-index 1234567..89abcde 100644
---- a/arquivo1.cpp
-+++ b/arquivo1.cpp
-@@ -10,6 +10,7 @@ void exemplo() {
-+    // @brief Adicionado exemplo de documentação
--    // @details Removido detalhe antigo
-}
-diff --git a/arquivo2.h b/arquivo2.h
-index abcdef0..1234567 100644
---- a/arquivo2.h
-+++ b/arquivo2.h
-@@ -15,8 +15,9 @@ void outroExemplo() {
-+    // @addFault Nova funcionalidade
-}
-diff --git a/arquivo3.txt b/arquivo3.txt
-index 7654321..abcdef0 100644
---- a/arquivo3.txt
-+++ b/arquivo3.txt
-@@ -5,6 +5,7 @@ Texto antigo
-+Texto sem palavras-chave
-"""
+    # Caminho para o arquivo .diff (hardcoded)
+    arquivo_diff = "exemplo.diff"
 
     # Palavras-chave para buscar
     palavras_chave = ["@brief", "@details", "@addFault"]
 
     # Processa o diff e retorna os arquivos modificados
-    arquivos = arquivos_modificados_com_palavras_chave(diff_exemplo, palavras_chave)
+    arquivos = arquivos_modificados_com_palavras_chave(arquivo_diff, palavras_chave)
 
     # Exibe os arquivos
     print("\nArquivos que sofreram modificações nas linhas contendo as palavras-chave:")
