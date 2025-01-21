@@ -25,10 +25,8 @@ def filtrar_linhas_com_html(caminho_arquivo):
     except Exception as e:
         print(f"Erro inesperado: {e}")
 
-# Programa principal
-if __name__ == "__main__":
-    # Solicita o caminho do arquivo ao usuário
-    caminho = input("Digite o caminho do arquivo de texto: ").strip()
-    
-    # Chama a função para filtrar as linhas
-    filtrar_linhas_com_html(caminho)
+# Caminho do arquivo hardcoded
+caminho = "exemplo.txt"  # Substitua pelo caminho do arquivo que deseja processar
+
+# Chama a função para filtrar as linhas
+filtrar_linhas_com_html(caminho)
