@@ -38,14 +38,23 @@ def fazer_merge():
 
     print("✅ Merge concluído sem conflitos.")
 
+def extrair_nomes_arquivos(caminhos):
+    """Remove os paths, mantendo apenas os nomes dos arquivos."""
+    return {os.path.basename(arquivo) for arquivo in caminhos}
+
 def commitar_apenas_arquivos_da_lista():
     """Commita apenas os arquivos da lista no branch temporário."""
     with open(os.path.join(REPO_PATH, LISTA_ARQUIVOS_TXT), "r", encoding="utf-8") as f:
-        arquivos_permitidos = [linha.strip() for linha in f.readlines() if linha.strip()]
+        arquivos_permitidos = {linha.strip() for linha in f.readlines() if linha.strip()}
 
-    # Filtrar os arquivos modificados no staging
+    # Obtém os arquivos modificados no staging
     arquivos_modificados = executar_comando("git diff --name-only --cached").split("\n")
-    arquivos_a_commitar = [arquivo for arquivo in arquivos_modificados if arquivo in arquivos_permitidos]
+    
+    # Remove os paths e compara apenas pelo nome do arquivo
+    arquivos_modificados_nomes = extrair_nomes_arquivos(arquivos_modificados)
+
+    # Filtra os arquivos que devem ser commitados
+    arquivos_a_commitar = [arquivo for arquivo in arquivos_modificados if os.path.basename(arquivo) in arquivos_permitidos]
 
     if not arquivos_a_commitar:
         print("❌ Nenhum arquivo da lista foi modificado. Nada a commitar.")
