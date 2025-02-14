@@ -36,10 +36,18 @@ def main():
     print("Variáveis SA encontradas no segundo commit:")
     print("\n".join(sorted(sa_vars_2)))
     
-    missing_vars = sa_vars_1 - sa_vars_2
-    if missing_vars:
-        print("\nVariáveis SA que estavam no primeiro commit, mas não no segundo:")
-        print("\n".join(sorted(missing_vars)))
+    added_vars = sa_vars_2 - sa_vars_1
+    removed_vars = sa_vars_1 - sa_vars_2
+    
+    if added_vars:
+        print("\nVariáveis SA adicionadas no segundo commit:")
+        print("\n".join(sorted(added_vars)))
+    else:
+        print("\nNenhuma variável SA foi adicionada.")
+    
+    if removed_vars:
+        print("\nVariáveis SA removidas no segundo commit:")
+        print("\n".join(sorted(removed_vars)))
     else:
         print("\nNenhuma variável SA foi removida.")
 
