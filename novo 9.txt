@@ -3,8 +3,12 @@ import re
 import webbrowser
 from bs4 import BeautifulSoup
 
-# Definição do caminho dos arquivos como global
+# Definição global do caminho da pasta e dos arquivos
 PASTA = "./"  # Defina o caminho correto
+ARQUIVO1 = os.path.join(PASTA, "ARQUIVO1.htm")
+ARQUIVO2 = os.path.join(PASTA, "ARQUIVO2.htm")
+ARQUIVO3 = os.path.join(PASTA, "ARQUIVO3.htm")
+ARQUIVO4 = os.path.join(PASTA, "ARQUIVO4.htm")
 
 def extrair_dados(arquivo, colunas):
     with open(arquivo, "r", encoding="utf-8") as f:
@@ -24,9 +28,9 @@ def extrair_dados(arquivo, colunas):
         
         return dados
 
-def buscar_no_arquivo1(object_id, arquivo1):
+def buscar_no_arquivo1(object_id):
     colunas_arquivo1 = ["Object Identifier", "Statement", "Object Type", "Image Allocation", "Lane", "Links"]
-    dados = extrair_dados(arquivo1, colunas_arquivo1)
+    dados = extrair_dados(ARQUIVO1, colunas_arquivo1)
     
     for linha in dados:
         if BeautifulSoup(linha["Object Identifier"], "html.parser").get_text(strip=True) == object_id:
@@ -63,10 +67,8 @@ def gerar_html(resultados):
     webbrowser.open(html_path)
 
 def main():
-    arquivo1 = os.path.join(PASTA, "ARQUIVO1.htm")
-    
     object_id = input("Digite o Object Identifier para pesquisa: ")
-    resultado_arquivo1 = buscar_no_arquivo1(object_id, arquivo1)
+    resultado_arquivo1 = buscar_no_arquivo1(object_id)
     
     if not resultado_arquivo1:
         print("Object Identifier não encontrado no ARQUIVO1.")
@@ -83,15 +85,14 @@ def main():
             print(f"Processando link: {link}")
     
     arquivos_restantes = {
-        "ARQUIVO2.htm": ["Object Identifier", "Statement", "Image Allocation"],
-        "ARQUIVO3.htm": ["ID", "Platsr"],
-        "ARQUIVO4.htm": ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"]
+        "ARQUIVO2": (ARQUIVO2, ["Object Identifier", "Statement", "Image Allocation"]),
+        "ARQUIVO3": (ARQUIVO3, ["ID", "Platsr"]),
+        "ARQUIVO4": (ARQUIVO4, ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"])
     }
     
     resultados_finais = {"ARQUIVO1": {key: val for key, val in resultado_arquivo1.items() if key != "Links"}}
     
-    for nome_arquivo, colunas in arquivos_restantes.items():
-        caminho_arquivo = os.path.join(PASTA, nome_arquivo)
+    for nome_arquivo, (caminho_arquivo, colunas) in arquivos_restantes.items():
         resultado = buscar_nos_outros_arquivos(object_id, caminho_arquivo, colunas)
         
         if resultado:
