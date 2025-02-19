@@ -18,7 +18,10 @@ def extrair_dados(arquivo, colunas):
         for linha in tabela.find_all("tr")[1:]:  # Ignorando cabeçalho
             celulas = linha.find_all("td")
             if len(celulas) >= len(colunas):
-                dados.append({coluna: celulas[i].get_text(strip=True) for i, coluna in enumerate(colunas)})
+                linha_dict = {coluna: celulas[i].get_text(strip=True) for i, coluna in enumerate(colunas)}
+                # Garantir que "Links" não seja False
+                linha_dict["Links"] = linha_dict.get("Links", "")  # Se não existir, será string vazia
+                dados.append(linha_dict)
         
         return dados
 
