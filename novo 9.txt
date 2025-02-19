@@ -1,0 +1,68 @@
+import os
+import re
+from bs4 import BeautifulSoup
+
+def extrair_dados(arquivo, colunas):
+    with open(arquivo, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
+        tabela = soup.find("table")  # Supondo que os dados estejam em uma tabela
+        
+        if not tabela:
+            return []
+        
+        dados = []
+        for linha in tabela.find_all("tr")[1:]:  # Ignorando cabeçalho
+            celulas = linha.find_all("td")
+            if len(celulas) >= len(colunas):
+                dados.append({coluna: celulas[i].get_text(strip=True) for i, coluna in enumerate(colunas)})
+        
+        return dados
+
+def buscar_no_arquivo1(object_id, arquivo1):
+    colunas_arquivo1 = ["Object Identifier", "Statement", "Object Type", "Image Allocation", "Lane", "Links"]
+    dados = extrair_dados(arquivo1, colunas_arquivo1)
+    
+    for linha in dados:
+        if linha["Object Identifier"] == object_id:
+            return linha
+    return None
+
+def buscar_nos_outros_arquivos(object_id, arquivo, colunas):
+    dados = extrair_dados(arquivo, colunas)
+    for linha in dados:
+        if linha.get("Object Identifier", linha.get("ID")) == object_id:
+            return linha
+    return None
+
+def main():
+    pasta = "./"  # Defina o caminho correto
+    arquivo1 = os.path.join(pasta, "ARQUIVO1.htm")
+    
+    object_id = input("Digite o Object Identifier para pesquisa: ")
+    resultado_arquivo1 = buscar_no_arquivo1(object_id, arquivo1)
+    
+    if not resultado_arquivo1:
+        print("Object Identifier não encontrado no ARQUIVO1.")
+        return
+    
+    print("\nResultados encontrados no ARQUIVO1:")
+    print(resultado_arquivo1)
+    
+    arquivos_restantes = {
+        "ARQUIVO2.htm": ["Object Identifier", "Statement", "Image Allocation"],
+        "ARQUIVO3.htm": ["ID", "Platsr"],
+        "ARQUIVO4.htm": ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"]
+    }
+    
+    for nome_arquivo, colunas in arquivos_restantes.items():
+        caminho_arquivo = os.path.join(pasta, nome_arquivo)
+        resultado = buscar_nos_outros_arquivos(object_id, caminho_arquivo, colunas)
+        
+        if resultado:
+            print(f"\nResultados encontrados no {nome_arquivo}:")
+            print(resultado)
+        else:
+            print(f"\nObject Identifier não encontrado em {nome_arquivo}.")
+
+if __name__ == "__main__":
+    main()
