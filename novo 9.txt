@@ -96,9 +96,9 @@ def main():
         resultado = buscar_nos_outros_arquivos(object_id, caminho_arquivo, colunas)
         
         if resultado:
-            print(f"\nResultados encontrados no {nome_arquivo}:")
+            print(f"\n Resultados encontrados no {nome_arquivo}:")
             print(resultado)
-        else:
+        else: 
             print(f"\nObject Identifier não encontrado em {nome_arquivo}.")
         
         resultados_finais[nome_arquivo] = resultado
