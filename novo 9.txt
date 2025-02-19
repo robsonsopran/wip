@@ -1,6 +1,10 @@
 import os
 import re
+import webbrowser
 from bs4 import BeautifulSoup
+
+# Definição do caminho dos arquivos como global
+PASTA = "./"  # Defina o caminho correto
 
 def extrair_dados(arquivo, colunas):
     with open(arquivo, "r", encoding="utf-8") as f:
@@ -24,6 +28,7 @@ def buscar_no_arquivo1(object_id, arquivo1):
     
     for linha in dados:
         if linha["Object Identifier"] == object_id:
+            print(f"Encontrado no ARQUIVO1: {linha}")
             return linha
     return None
 
@@ -34,9 +39,29 @@ def buscar_nos_outros_arquivos(object_id, arquivo, colunas):
             return linha
     return None
 
+def gerar_html(resultados):
+    html_path = os.path.join(PASTA, "resultado.html")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write("<html><head><title>Resultados</title></head><body>")
+        f.write("<h1>Resultados da Pesquisa</h1>")
+        
+        for nome_arquivo, dados in resultados.items():
+            f.write(f"<h2>{nome_arquivo}</h2>")
+            if dados:
+                f.write("<table border='1'><tr>")
+                f.write("".join(f"<th>{col}</th>" for col in dados.keys()))
+                f.write("</tr><tr>")
+                f.write("".join(f"<td>{val}</td>" for val in dados.values()))
+                f.write("</tr></table>")
+            else:
+                f.write("<p>Object Identifier não encontrado.</p>")
+        
+        f.write("</body></html>")
+    
+    webbrowser.open(html_path)
+
 def main():
-    pasta = "./"  # Defina o caminho correto
-    arquivo1 = os.path.join(pasta, "ARQUIVO1.htm")
+    arquivo1 = os.path.join(PASTA, "ARQUIVO1.htm")
     
     object_id = input("Digite o Object Identifier para pesquisa: ")
     resultado_arquivo1 = buscar_no_arquivo1(object_id, arquivo1)
@@ -48,14 +73,21 @@ def main():
     print("\nResultados encontrados no ARQUIVO1:")
     print(resultado_arquivo1)
     
+    # Exibir ARQUIVOX-XXXX dos links
+    links = resultado_arquivo1.get("Links", "").split()
+    for link in links:
+        print(f"Processando link: {link}")
+    
     arquivos_restantes = {
         "ARQUIVO2.htm": ["Object Identifier", "Statement", "Image Allocation"],
         "ARQUIVO3.htm": ["ID", "Platsr"],
         "ARQUIVO4.htm": ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"]
     }
     
+    resultados_finais = {"ARQUIVO1": resultado_arquivo1}
+    
     for nome_arquivo, colunas in arquivos_restantes.items():
-        caminho_arquivo = os.path.join(pasta, nome_arquivo)
+        caminho_arquivo = os.path.join(PASTA, nome_arquivo)
         resultado = buscar_nos_outros_arquivos(object_id, caminho_arquivo, colunas)
         
         if resultado:
@@ -63,6 +95,10 @@ def main():
             print(resultado)
         else:
             print(f"\nObject Identifier não encontrado em {nome_arquivo}.")
+        
+        resultados_finais[nome_arquivo] = resultado
+    
+    gerar_html(resultados_finais)
 
 if __name__ == "__main__":
     main()
