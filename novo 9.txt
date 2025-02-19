@@ -49,9 +49,9 @@ def gerar_html(resultados):
             f.write(f"<h2>{nome_arquivo}</h2>")
             if dados:
                 f.write("<table border='1'><tr>")
-                f.write("".join(f"<th>{col}</th>" for col in dados.keys()))
+                f.write("".join(f"<th>{col}</th>" for col in dados.keys() if col != "Links"))
                 f.write("</tr><tr>")
-                f.write("".join(f"<td>{val}</td>" for val in dados.values()))
+                f.write("".join(f"<td>{val}</td>" for col, val in dados.items() if col != "Links"))
                 f.write("</tr></table>")
             else:
                 f.write("<p>Object Identifier não encontrado.</p>")
@@ -74,9 +74,11 @@ def main():
     print(resultado_arquivo1)
     
     # Exibir ARQUIVOX-XXXX dos links
-    links = resultado_arquivo1.get("Links", "").split()
-    for link in links:
-        print(f"Processando link: {link}")
+    links = resultado_arquivo1.get("Links", "")
+    if links:
+        link_list = links.split()
+        for link in link_list:
+            print(f"Processando link: {link}")
     
     arquivos_restantes = {
         "ARQUIVO2.htm": ["Object Identifier", "Statement", "Image Allocation"],
@@ -84,7 +86,7 @@ def main():
         "ARQUIVO4.htm": ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"]
     }
     
-    resultados_finais = {"ARQUIVO1": resultado_arquivo1}
+    resultados_finais = {"ARQUIVO1": {key: val for key, val in resultado_arquivo1.items() if key != "Links"}}
     
     for nome_arquivo, colunas in arquivos_restantes.items():
         caminho_arquivo = os.path.join(PASTA, nome_arquivo)
