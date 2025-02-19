@@ -28,19 +28,15 @@ def extrair_dados(arquivo, colunas):
         
         return dados
 
-def buscar_no_arquivo1(object_id):
-    colunas_arquivo1 = ["Object Identifier", "Statement", "Object Type", "Image Allocation", "Lane", "Links"]
-    dados = extrair_dados(ARQUIVO1, colunas_arquivo1)
-    
-    for linha in dados:
+def buscar_no_arquivo1(object_id, dados_arquivo1):
+    for linha in dados_arquivo1:
         if BeautifulSoup(linha["Object Identifier"], "html.parser").get_text(strip=True) == object_id:
             print(f"Encontrado no ARQUIVO1: {linha}")
             return linha
     return None
 
-def buscar_nos_outros_arquivos(object_id, arquivo, colunas):
-    dados = extrair_dados(arquivo, colunas)
-    for linha in dados:
+def buscar_nos_outros_arquivos(object_id, dados_arquivo, colunas):
+    for linha in dados_arquivo:
         if BeautifulSoup(linha.get("Object Identifier", linha.get("ID", "")), "html.parser").get_text(strip=True) == object_id:
             return linha
     return None
@@ -67,43 +63,46 @@ def gerar_html(resultados):
     webbrowser.open(html_path)
 
 def main():
-    object_id = input("Digite o Object Identifier para pesquisa: ")
-    resultado_arquivo1 = buscar_no_arquivo1(object_id)
+    # Carregar os dados uma única vez
+    colunas_arquivo1 = ["Object Identifier", "Statement", "Object Type", "Image Allocation", "Lane", "Links"]
+    colunas_arquivo2 = ["Object Identifier", "Statement", "Image Allocation"]
+    colunas_arquivo3 = ["ID", "Platsr"]
+    colunas_arquivo4 = ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"]
     
-    if not resultado_arquivo1:
-        print("Object Identifier não encontrado no ARQUIVO1.")
-        return
+    print("Carregando arquivos...")
+    dados_arquivo1 = extrair_dados(ARQUIVO1, colunas_arquivo1)
+    dados_arquivo2 = extrair_dados(ARQUIVO2, colunas_arquivo2)
+    dados_arquivo3 = extrair_dados(ARQUIVO3, colunas_arquivo3)
+    dados_arquivo4 = extrair_dados(ARQUIVO4, colunas_arquivo4)
     
-    print("\nResultados encontrados no ARQUIVO1:")
-    print(resultado_arquivo1)
-    
-    # Exibir ARQUIVOX-XXXX dos links
-    links = resultado_arquivo1.get("Links", "")
-    if links:
-        link_list = links.split()
-        for link in link_list:
-            print(f"Processando link: {link}")
-    
-    arquivos_restantes = {
-        "ARQUIVO2": (ARQUIVO2, ["Object Identifier", "Statement", "Image Allocation"]),
-        "ARQUIVO3": (ARQUIVO3, ["ID", "Platsr"]),
-        "ARQUIVO4": (ARQUIVO4, ["ID", "ICD-SW", "Detailed Description", "Allocation", "Acess", "Adress"])
-    }
-    
-    resultados_finais = {"ARQUIVO1": {key: val for key, val in resultado_arquivo1.items() if key != "Links"}}
-    
-    for nome_arquivo, (caminho_arquivo, colunas) in arquivos_restantes.items():
-        resultado = buscar_nos_outros_arquivos(object_id, caminho_arquivo, colunas)
+    while True:
+        object_id = input("Digite o Object Identifier para pesquisa (ou 'sair' para encerrar): ")
+        if object_id.lower() == "sair":
+            break
         
-        if resultado:
-            print(f"\n Resultados encontrados no {nome_arquivo}:")
-            print(resultado)
-        else: 
-            print(f"\nObject Identifier não encontrado em {nome_arquivo}.")
+        resultado_arquivo1 = buscar_no_arquivo1(object_id, dados_arquivo1)
         
-        resultados_finais[nome_arquivo] = resultado
-    
-    gerar_html(resultados_finais)
+        if not resultado_arquivo1:
+            print("Object Identifier não encontrado no ARQUIVO1.")
+            continue
+        
+        print("\nResultados encontrados no ARQUIVO1:")
+        print(resultado_arquivo1)
+        
+        # Exibir ARQUIVOX-XXXX dos links
+        links = resultado_arquivo1.get("Links", "")
+        if links:
+            link_list = links.split()
+            for link in link_list:
+                print(f"Processando link: {link}")
+        
+        resultados_finais = {"ARQUIVO1": {key: val for key, val in resultado_arquivo1.items() if key != "Links"}}
+        
+        resultados_finais["ARQUIVO2"] = buscar_nos_outros_arquivos(object_id, dados_arquivo2, colunas_arquivo2)
+        resultados_finais["ARQUIVO3"] = buscar_nos_outros_arquivos(object_id, dados_arquivo3, colunas_arquivo3)
+        resultados_finais["ARQUIVO4"] = buscar_nos_outros_arquivos(object_id, dados_arquivo4, colunas_arquivo4)
+        
+        gerar_html(resultados_finais)
 
 if __name__ == "__main__":
     main()
