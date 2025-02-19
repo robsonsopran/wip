@@ -18,8 +18,7 @@ def extrair_dados(arquivo, colunas):
         for linha in tabela.find_all("tr")[1:]:  # Ignorando cabeçalho
             celulas = linha.find_all("td")
             if len(celulas) >= len(colunas):
-                linha_dict = {coluna: celulas[i].get_text(strip=True) for i, coluna in enumerate(colunas)}
-                # Garantir que "Links" não seja False
+                linha_dict = {coluna: str(celulas[i]) for i, coluna in enumerate(colunas)}  # Mantém a formatação HTML
                 linha_dict["Links"] = linha_dict.get("Links", "")  # Se não existir, será string vazia
                 dados.append(linha_dict)
         
@@ -30,7 +29,7 @@ def buscar_no_arquivo1(object_id, arquivo1):
     dados = extrair_dados(arquivo1, colunas_arquivo1)
     
     for linha in dados:
-        if linha["Object Identifier"] == object_id:
+        if BeautifulSoup(linha["Object Identifier"], "html.parser").get_text(strip=True) == object_id:
             print(f"Encontrado no ARQUIVO1: {linha}")
             return linha
     return None
@@ -38,7 +37,7 @@ def buscar_no_arquivo1(object_id, arquivo1):
 def buscar_nos_outros_arquivos(object_id, arquivo, colunas):
     dados = extrair_dados(arquivo, colunas)
     for linha in dados:
-        if linha.get("Object Identifier", linha.get("ID")) == object_id:
+        if BeautifulSoup(linha.get("Object Identifier", linha.get("ID", "")), "html.parser").get_text(strip=True) == object_id:
             return linha
     return None
 
@@ -54,7 +53,7 @@ def gerar_html(resultados):
                 f.write("<table border='1'><tr>")
                 f.write("".join(f"<th>{col}</th>" for col in dados.keys() if col != "Links"))
                 f.write("</tr><tr>")
-                f.write("".join(f"<td>{val}</td>" for col, val in dados.items() if col != "Links"))
+                f.write("".join(f"{val}" for col, val in dados.items() if col != "Links"))  # Mantendo formatação
                 f.write("</tr></table>")
             else:
                 f.write("<p>Object Identifier não encontrado.</p>")
