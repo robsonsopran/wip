@@ -35,11 +35,15 @@ def buscar_no_arquivo1(object_id, dados_arquivo1):
             return linha
     return None
 
-def buscar_nos_outros_arquivos(object_id, dados_arquivo, colunas):
+def buscar_nos_outros_arquivos(object_id, dados_arquivo, coluna_id):
     for linha in dados_arquivo:
-        if BeautifulSoup(linha.get("Object Identifier", linha.get("ID", "")), "html.parser").get_text(strip=True) == object_id:
+        if BeautifulSoup(linha.get(coluna_id, ""), "html.parser").get_text(strip=True) == object_id:
             return linha
     return None
+
+def extrair_links_validos(links, nome_arquivo):
+    padrao = re.compile(rf"{nome_arquivo}-\\d+")
+    return padrao.findall(links)
 
 def gerar_html(resultados):
     html_path = os.path.join(PASTA, "resultado.html")
@@ -89,18 +93,19 @@ def main():
         print("\nResultados encontrados no ARQUIVO1:")
         print(resultado_arquivo1)
         
-        # Exibir ARQUIVOX-XXXX dos links
+        # Extrair links válidos
         links = resultado_arquivo1.get("Links", "")
-        if links:
-            link_list = links.split()
-            for link in link_list:
-                print(f"Processando link: {link}")
+        arquivos_referenciados = {
+            "ARQUIVO2": extrair_links_validos(links, "ARQUIVO2"),
+            "ARQUIVO3": extrair_links_validos(links, "ARQUIVO3"),
+            "ARQUIVO4": extrair_links_validos(links, "ARQUIVO4"),
+        }
         
         resultados_finais = {"ARQUIVO1": {key: val for key, val in resultado_arquivo1.items() if key != "Links"}}
         
-        resultados_finais["ARQUIVO2"] = buscar_nos_outros_arquivos(object_id, dados_arquivo2, colunas_arquivo2)
-        resultados_finais["ARQUIVO3"] = buscar_nos_outros_arquivos(object_id, dados_arquivo3, colunas_arquivo3)
-        resultados_finais["ARQUIVO4"] = buscar_nos_outros_arquivos(object_id, dados_arquivo4, colunas_arquivo4)
+        resultados_finais["ARQUIVO2"] = buscar_nos_outros_arquivos(object_id, dados_arquivo2, "Object Identifier")
+        resultados_finais["ARQUIVO3"] = buscar_nos_outros_arquivos(object_id, dados_arquivo3, "ID")
+        resultados_finais["ARQUIVO4"] = buscar_nos_outros_arquivos(object_id, dados_arquivo4, "ID")
         
         gerar_html(resultados_finais)
 
